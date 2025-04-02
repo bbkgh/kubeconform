@@ -377,6 +377,87 @@ lastName: bar
 			Error,
 			[]ValidationError{},
 		},
+		{
+			"valid resource duration - go format",
+			[]byte(`
+kind: name
+apiVersion: v1
+interval: 5s
+`),
+			[]byte(`{
+  "title": "Example Schema",
+  "type": "object",
+  "properties": {
+    "kind": {
+      "type": "string"
+    },
+	"interval": {
+      "type": "string",
+	  "format": "duration"
+    }
+  },
+  "required": ["interval"]
+}`),
+			nil,
+			false,
+			false,
+			Valid,
+			[]ValidationError{},
+		},
+		{
+			"valid resource duration - iso8601 format",
+			[]byte(`
+kind: name
+apiVersion: v1
+interval: PT1H
+`),
+			[]byte(`{
+  "title": "Example Schema",
+  "type": "object",
+  "properties": {
+    "kind": {
+      "type": "string"
+    },
+	"interval": {
+      "type": "string",
+	  "format": "duration"
+    }
+  },
+  "required": ["interval"]
+}`),
+			nil,
+			false,
+			false,
+			Valid,
+			[]ValidationError{},
+		},
+		{
+			"invalid resource duration",
+			[]byte(`
+kind: name
+apiVersion: v1
+interval: test
+`),
+			[]byte(`{
+  "title": "Example Schema",
+  "type": "object",
+  "properties": {
+    "kind": {
+      "type": "string"
+    },
+	"interval": {
+      "type": "string",
+	  "format": "duration"
+    }
+  },
+  "required": ["interval"]
+}`),
+			nil,
+			false,
+			false,
+			Invalid,
+			[]ValidationError{{Path: "/interval", Msg: "'test' is not valid 'duration'"}},
+		},
 	} {
 		val := v{
 			opts: Opts{
@@ -408,7 +489,7 @@ lastName: bar
 		if len(got.ValidationErrors) != len(testCase.expectErrors) {
 			t.Errorf("Test '%s': expected ValidationErrors: %+v, got: % v", testCase.name, testCase.expectErrors, got.ValidationErrors)
 		}
-		for i, _ := range testCase.expectErrors {
+		for i := range testCase.expectErrors {
 			if testCase.expectErrors[i] != got.ValidationErrors[i] {
 				t.Errorf("Test '%s': expected ValidationErrors: %+v, got: % v", testCase.name, testCase.expectErrors, got.ValidationErrors)
 			}
